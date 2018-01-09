@@ -4,23 +4,22 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 /**
- * Created by Phoenix on 1/6/2018.
+ * Created by Phoenix on 1/8/2018.
  */
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG ="MainActivity Log" ;
     private final int rosterSize = 15;
-    private final int nonZeroIndexes = 14;
     private final int salaryCap = 175;
-    private final int individualCap = 100;
     private final int nameLength = 7;
     private final int nameChars = 3;
     private int threshold;
-    private int extra;
     private Bot[] botsArray = new Bot[rosterSize];
 
 
@@ -28,75 +27,91 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        calculateThreshold(rosterSize);
-        calculateExtra(rosterSize);
-        reserveArrayValues(botsArray,rosterSize);
+
+
+        generateBots(rosterSize,calculateThreshold(rosterSize, salaryCap));
+        //setBotNames(nameLength,nameChars);
+        //printToString();
     }
 
 
-    protected void generateBots(Bot [] botsArray, int salaryCap, int threshold, int extra){
+    protected void generateBots(int salaryCap, int threshold){
 
-        //variable to show how much free space in points is available outside of the lowest possible arrangement
-        this.extra = extra;
+        //variable for random generator in this case it equals 84
+        int bound = threshold;
 
-        //variable for random generator
-        int bound = salaryCap - (threshold - nonZeroIndexes);
+        //HashSet used in dupe checking
+        Set<Integer> duplist = new HashSet<Integer>();
+
+        //declare random variable
+        Random rand = new Random();
+
+        //sum int for troubleshooting
+        int sum=0;
 
         //loop to traverse array in attempt to update values with random
         for(int i= botsArray.length -1; i >= 0; i--){
-            Random rand = new Random();
-            int temp = rand.nextInt(bound + 1);
-            //update bound for next slot
-            bound -= i;
-            extra -= temp - i;
-            for(int j = 0; j < botsArray.length; j++){
-                if(bound == botsArray[j].getTas()){
-                    i = i-1;
+            //Log.d(TAG,"Index " + i);
+            int temp = rand.nextInt(bound);
 
+            //Duplicate check hashset will return true if able to add/ false if element already exists. True = no dupe/ False means dupe.
+            if(duplist.add(temp)){
+
+                // add generated value to array of objects
+                botsArray[i] = new Bot(temp);
+                sum += temp;
+                Log.d(TAG," Index : " + i + " Value : " +temp);
+                Log.d(TAG," Index : " + i + " sum : " +sum);
+                Log.d(TAG, "Index: " + i + " Bound : " + bound);
+
+                // check if generated number is  part of numbers expected within array already
+                if( temp >= botsArray.length){
+
+                    bound -=(temp - i);
+                }
+                if(temp < botsArray.length && i < temp){
+                    bound -=(temp - i);
                 }
             }
-            if(extra < 0){
-                return;
+            else {
+                i ++;
+                //Log.d(TAG,"Outer loop");
+                //break;
+            }
+        }
+    }
+    
+
+
+    protected String setBotNames(int nameLength, int nameChars){
+
+        Random rand = new Random();
+        char[] username= new char[nameLength];
+        String usern;
+
+        //HashSet used in dupe checking
+        Set<String> duplist = new HashSet<String>();
+
+
+            for (int h = 0; h < nameChars; h++) {
+                int n = rand.nextInt(26);
+                char v = (char) (n + 97);
+                username[h] = v;
+            }
+            for (int i = nameChars; i < nameLength; i++) {
+                int n = rand.nextInt(9);
+                username[i] = (char) n;
+            }
+            usern = String.valueOf(username);
+            if(!duplist.add(usern)) {
+                Log.d(TAG, "Name Generated is " + usern);
+                return usern;
             }
             else{
-                botsArray[i].setTas(temp);
+                Log.d(TAG, "Name Generated is " + usern);
+                return usern;
             }
         }
-
-
-    }
-
-    /*
-    *
-    * Reserve the lower values to ensure that we are always below the cap
-    *
-     */
-    protected void reserveArrayValues(Bot [] array, int size){
-
-        for(int i = 0; i<array.length;i++){
-            Bot bot = new Bot(i);
-            array[i] = bot;
-        }
-
-    }
-
-    protected void setBotNames(Bot[] array, int nameLength, int nameChars) {
-        Random rand = new Random();
-        StringBuilder randomNameBuilder = new StringBuilder();
-        char randChar;
-        for (int i = 0; i < array.length; i++) {
-            for (int j = 0; j < nameChars; j++) {
-                randChar = (char) (rand.nextInt(96) + 32);
-                randomNameBuilder.append(randChar);
-            }
-            for (int k = nameChars; k < nameLength; k++) {
-                randChar = (char) (rand.nextInt(96) + 32);
-                randomNameBuilder.append(randChar);
-            }
-            
-            array[i].setName(randomNameBuilder.toString());
-        }
-    }
 
     /*
     *
@@ -104,24 +119,19 @@ public class MainActivity extends AppCompatActivity {
     *   fill array with unique values and remain under total cap. This initial value only holds true at the initial index of the array
     *
      */
-    protected int calculateThreshold(int size){
+    protected int calculateThreshold(int size, int salaryCap){
 
-        threshold = ((size - 1)*(size))/2;
-        Log.d(TAG,"Threshold set to: " + threshold);
+        threshold = ((size - 2)*(size - 1))/2;
+        Log.d(TAG,"Threshold set to: " + (salaryCap - threshold));
 
-        return threshold;
+        return salaryCap - threshold;
     }
 
-    /*
-    *
-    *   Method that calculates the difference between total points allowed
-    *   and point total if all values were lowest possible
-    *
-     */
-    protected int calculateExtra(int size){
-
-        extra = salaryCap -(((size - 1)*(size))/2);
-        Log.d(TAG,"Extra set to : " + extra);
-        return extra;
+    protected void printToString(){
+        for(int i = 0; i > botsArray.length; i++){
+            Log.d(TAG,botsArray[i].toString());
+        }
     }
+
+
 }
