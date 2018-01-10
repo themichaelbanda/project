@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
@@ -28,16 +29,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-        generateBots(rosterSize,calculateThreshold(rosterSize, salaryCap));
-        //setBotNames(nameLength,nameChars);
-        //printToString();
+        setBotsArray(rosterSize);
+        generateBots(calculateThreshold(rosterSize, salaryCap));
+        setBotNames(nameLength,nameChars);
     }
 
 
-    protected void generateBots(int salaryCap, int threshold){
+    protected void generateBots(int threshold){
 
-        //variable for random generator in this case it equals 84
+        //variable for random generator in this case it equals 70
         int bound = threshold;
 
         //HashSet used in dupe checking
@@ -50,67 +50,73 @@ public class MainActivity extends AppCompatActivity {
         int sum=0;
 
         //loop to traverse array in attempt to update values with random
-        for(int i= botsArray.length -1; i >= 0; i--){
-            //Log.d(TAG,"Index " + i);
+        for(int i = botsArray.length - 1; i >= 0; i--){
+
             int temp = rand.nextInt(bound);
 
-            //Duplicate check hashset will return true if able to add/ false if element already exists. True = no dupe/ False means dupe.
-            if(duplist.add(temp)){
+            //While loop using Duplicate check hashset in order to determine if duplicate or not.
+            while(!duplist.add(temp + i)) {
+                temp = rand.nextInt(bound);
+                Log.d(TAG," Duplicate Test Index : " + i +" number gen : " + temp);
+            }
 
+            //Lower bound value by the amount generated
+            bound -= temp;
+
+            //Loop to make sure that value doesn't cause array to exceed target limit (175 in this case)
+            if(bound >= 0) {
                 // add generated value to array of objects
-                botsArray[i] = new Bot(temp);
-                sum += temp;
-                Log.d(TAG," Index : " + i + " Value : " +temp);
-                Log.d(TAG," Index : " + i + " sum : " +sum);
-                Log.d(TAG, "Index: " + i + " Bound : " + bound);
-
-                // check if generated number is  part of numbers expected within array already
-                if( temp >= botsArray.length){
-
-                    bound -=(temp - i);
-                }
-                if(temp < botsArray.length && i < temp){
-                    bound -=(temp - i);
-                }
+                botsArray[i].setTas(i + temp);
+                Log.d(TAG,"Value set to : " + botsArray[i].getTas());
             }
-            else {
-                i ++;
-                //Log.d(TAG,"Outer loop");
-                //break;
-            }
+
+            sum += temp;
+        }
+        Arrays.sort(botsArray);
+        for(int i=0; i < botsArray.length;i++){
+            //Log.d(TAG,"Index : " + i + " Value " + botsArray[i].getTas() + " Strength: " + botsArray[i].getStrength() + " Agility : " + botsArray[i].getAgility());
         }
     }
-    
 
-
-    protected String setBotNames(int nameLength, int nameChars){
+    /*
+    *   Method to fill array objects with unique names
+    *
+     */
+    protected void setBotNames(int nameLength, int nameChars){
 
         Random rand = new Random();
-        char[] username= new char[nameLength];
-        String usern;
+
+        String alpha = "abcdefghijklmnopqrstuvwxyz";
 
         //HashSet used in dupe checking
         Set<String> duplist = new HashSet<String>();
 
-
+       for (int j = 0; j < nameLength; j++) {
+           StringBuffer randStr = new StringBuffer();
             for (int h = 0; h < nameChars; h++) {
                 int n = rand.nextInt(26);
-                char v = (char) (n + 97);
-                username[h] = v;
+                char v = alpha.charAt(n);
+                randStr.append(v);
             }
             for (int i = nameChars; i < nameLength; i++) {
                 int n = rand.nextInt(9);
-                username[i] = (char) n;
+                randStr.append(n);
             }
-            usern = String.valueOf(username);
-            if(!duplist.add(usern)) {
-                Log.d(TAG, "Name Generated is " + usern);
-                return usern;
+            if(duplist.add(randStr.toString())){
+           Log.d(TAG,"Name : " +randStr.toString());
+            botsArray[j].setName(randStr.toString());
             }
-            else{
-                Log.d(TAG, "Name Generated is " + usern);
-                return usern;
-            }
+            else{j--;}
+       }
+        //Log.d(TAG,"Name : " +randStr.toString());
+            //if(!duplist.add(usern)) {
+               // Log.d(TAG, "Name Generated is " + usern);
+
+           // }
+           // else{
+               // Log.d(TAG, "Name Generated is " + usern);
+
+          //  }
         }
 
     /*
@@ -121,15 +127,23 @@ public class MainActivity extends AppCompatActivity {
      */
     protected int calculateThreshold(int size, int salaryCap){
 
-        threshold = ((size - 2)*(size - 1))/2;
+        threshold = ((size - 1)*(size))/2;
         Log.d(TAG,"Threshold set to: " + (salaryCap - threshold));
 
         return salaryCap - threshold;
     }
 
-    protected void printToString(){
-        for(int i = 0; i > botsArray.length; i++){
-            Log.d(TAG,botsArray[i].toString());
+    /*
+    *   Method to initialize array with default values equal to index
+    *   this essentially reserves lower values to ensure we never exceed cap and
+    *   always have the smallest unique values available
+     */
+    protected void setBotsArray(int size){
+        Log.d(TAG, "Initializing array");
+        for(int i = 0; i < size; i++){
+
+            botsArray[i] = new Bot(i);
+            Log.d(TAG, "setBotsArray index " + i+ " Value : " + botsArray[i].getTas());
         }
     }
 

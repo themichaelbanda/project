@@ -1,16 +1,16 @@
 package com.penguinsonabeach.roster_bots;
 
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.util.Random;
 
-import static android.content.ContentValues.TAG;
 
 /**
  * Created by Phoenix on 1/8/2018.
  */
 
-public class Bot {
+public class Bot implements Comparable<Bot>{
 
     //Variable Declaration
 
@@ -86,9 +86,11 @@ public class Bot {
         return " Strength: " + strength + " Agility: " + agility + " Speed: " + speed;
     }
 
+    @Override
+    public int compareTo(Bot compareBot) {
 
+        int compareTas = ((Bot) compareBot).getTas();
 
-
-
-
+        return compareTas - this.tas;
+    }
 }
